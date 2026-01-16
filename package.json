@@ -1,0 +1,30 @@
+{
+  "name": "netflix-monitor-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "netflix-bot.js",
+  "scripts": {
+    "start": "node netflix-bot.js",
+    "dev": "nodemon netflix-bot.js"
+  },
+  "dependencies": {
+    "node-telegram-bot-api": "^0.64.0",
+    "googleapis": "^136.0.0",
+    "google-auth-library": "^9.10.0",
+    "node-cron": "^3.0.3",
+    "dotenv": "^16.4.5",
+    "axios": "^1.7.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "gmail",
+    "netflix",
+    "notification"
+  ],
+  "author": "",
+  "license": "MIT"
+}
