@@ -1,12 +1,25 @@
 // Netflix Monitor Telegram Bot
 // This bot scans Gmail for Netflix household update emails and sends them to Telegram
-require('dotenv').config();
-const TelegramBot = require('node-telegram-bot-api');
-const cron = require('node-cron');
-const axios = require('axios');
-const { google } = require('googleapis');
-const fs = require('fs');
-const path = require('path');
+
+// Load .env first (recommended in ESM)
+import 'dotenv/config'; // loads process.env from .env
+
+// Default-import CommonJS packages (common pattern)
+import TelegramBot from 'node-telegram-bot-api'; // ESM usage supported [web:355]
+import cron from 'node-cron';
+import axios from 'axios';
+
+// googleapis supports named import of `google`
+import { google } from 'googleapis';
+
+// Built-in Node modules
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// ESM replacement for __filename and __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ============================================
 // CONFIGURATION
@@ -15,10 +28,7 @@ const path = require('path');
 const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN; // Your bot token from BotFather
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;         // Your Telegram chat ID
 const GMAIL_USER = process.env.GMAIL_ADDRESS;          // Your Gmail address
-
-// For Gmail API authentication (free tier)
-const CREDENTIALS_PATH = path.join(__dirname, 'gmail-credentials.json');
-const TOKEN_PATH = path.join(__dirname, 'gmail-token.json');
+const TOKEN = JSON.parse(process.env.GMAIL_TOKEN_JSON);
 
 // ============================================
 // INITIALIZE BOT
@@ -44,7 +54,7 @@ const oauth2Client = new google.auth.OAuth2(
     process.env.GMAIL_CLIENT_SECRET,
     'http://localhost:3000/auth/callback'
 );
-oauth2Client.setCredentials(JSON.parse(fs.readFileSync('gmail-token.json', 'utf8')));
+oauth2Client.setCredentials(TOKEN);
 
 // Get Gmail service instance
 function getGmailService() {
@@ -59,7 +69,7 @@ function getGmailService() {
 // ============================================
 
 // Function to search for Netflix household update emails
-async function scanForNetflixEmails() {
+export async function scanForNetflixEmails() {
     try {
         const gmail = getGmailService();
 
@@ -67,7 +77,7 @@ async function scanForNetflixEmails() {
         // Query: from Netflix AND (households OR account sharing)
         const response = await gmail.users.messages.list({
             userId: 'me',
-            q: 'in:inbox is:unread from:no-reply@accounts.google.com',
+            q: 'in:inbox is:unread from:info@account.netflix.com subject:("update your Netflix household" OR "temporary access code")',
             maxResults: 5,
             fields: 'messages(id, threadId)'
         });
@@ -122,11 +132,8 @@ async function scanForNetflixEmails() {
     } catch (error) {
         console.error('Error scanning Gmail:', error.message);
         if (error.message.includes('invalid_grant')) {
-            console.log('Token expired. Please re-authenticate.');
-            // Reset token file to trigger re-authentication
-            if (fs.existsSync(TOKEN_PATH)) {
-                fs.unlinkSync(TOKEN_PATH);
-            }
+            console.error('OAuth token invalid (expired/revoked). Re-auth and update GMAIL_TOKEN_JSON.');
+            process.exit(1);
         }
     }
 }

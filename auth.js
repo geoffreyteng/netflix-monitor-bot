@@ -1,6 +1,12 @@
-require('dotenv').config();
-const fs = require('fs');
-const { google } = require('googleapis');
+// Load .env first (recommended in ESM)
+import 'dotenv/config'; // loads process.env from .env [web:353]
+
+// googleapis supports named import of `google`
+import { google } from 'googleapis';
+
+// Built-in Node modules
+import fs from 'node:fs';
+
 
 const SCOPES = ['https://www.googleapis.com/auth/gmail.modify'];
 
